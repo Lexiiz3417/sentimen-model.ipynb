@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analisis Sentimen - Keren</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<div class="card-container">
+    <div class="card">
+        <h1>Analisis Sentimen</h1>
+        <p class="description">
+            Masukkan kalimat atau ulasan di bawah ini untuk melihat sentimennya.
+        </p>
+        
+        <div class="input-area">
+            <textarea id="inputText" rows="5" placeholder="Tuliskan di sini..."></textarea>
+            <button id="analyzeButton">Analisis</button>
+        </div>
+        
+        <div id="resultBox" style="display: none;">
+            <p id="resultText"></p>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('analyzeButton').addEventListener('click', predictSentiment);
+
+    async function predictSentiment() {
+        const inputText = document.getElementById('inputText').value;
+        if (inputText.trim() === '') {
+            alert('Tolong masukkan teks!');
+            return;
+        }
+
+        const resultBox = document.getElementById('resultBox');
+        const resultText = document.getElementById('resultText');
+        
+        // Sembunyikan hasil lama dan beri tahu user sedang memproses
+        resultBox.style.display = 'block';
+        resultText.textContent = 'Menganalisis...';
+        resultBox.className = 'neutral';
+        
+        const response = await fetch('/predict', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ teks: inputText })
+        });
+
+        const data = await response.json();
+        
+        const sentimen = data.sentimen;
+        const probabilitas = (data.probabilitas * 100).toFixed(2);
+
+        // Update hasil
+        resultText.textContent = `Sentimen: ${sentimen} (${probabilitas}%)`;
+        
+        // Ubah warna latar belakang sesuai sentimen
+        resultBox.classList.remove('positive', 'negative', 'neutral');
+        if (sentimen.includes('Positif')) {
+            resultBox.classList.add('positive');
+        } else if (sentimen.includes('Negatif')) {
+            resultBox.classList.add('negative');
+        } else {
+            resultBox.classList.add('neutral');
+        }
+    }
+</script>
+
+</body>
+</html>
